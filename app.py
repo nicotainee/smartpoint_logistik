@@ -59,6 +59,13 @@ def logout():
     return redirect(url_for('login'))
 
 
+# ─── LANDING PAGE ─────────────────────────────────────────────────────────
+
+@app.route('/')
+def landing():
+    return render_template('landing.html')
+
+
 # ─── HALAMAN KURIR (QR Scan) ───────────────────────────────────────────────
 
 @app.route('/cek/<kode_unik>')
