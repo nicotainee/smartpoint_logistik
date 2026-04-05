@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SmartPoint — Sistem Alamat Cerdas untuk Logistik</title>
+  <link href="https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080a0f;
+      --surface: #0f1218;
+      --border: #1e2433;
+      --accent: #00e5a0;
+      --accent2: #0066ff;
+      --text: #e8eaf0;
+      --muted: #5a6278;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      overflow-x: hidden;
+    }
+
+    /* ── GRID BG ── */
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100;
+      padding: 20px 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(8,10,15,0.8);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem; font-weight: 800;
+      color: var(--accent);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .nav-logo span { color: var(--text); }
+
+    .nav-links { display: flex; align-items: center; gap: 32px; }
+    .nav-links a {
+      color: var(--muted); text-decoration: none;
+      font-size: 0.82rem; transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--accent); }
+
+    .btn-nav {
+      background: var(--accent); color: #080a0f;
+      padding: 8px 20px; border-radius: 6px;
+      font-family: 'Syne', sans-serif; font-weight: 700;
+      font-size: 0.82rem; text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-nav:hover { background: #00c98c; transform: translateY(-1px); }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 120px 40px 80px;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(0,229,160,0.08);
+      border: 1px solid rgba(0,229,160,0.2);
+      padding: 6px 16px; border-radius: 100px;
+      font-size: 0.76rem; color: var(--accent);
+      margin-bottom: 32px;
+      animation: fadeUp 0.6s ease both;
+    }
+
+    .hero-badge::before {
+      content: ''; width: 6px; height: 6px;
+      background: var(--accent); border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.5); }
+    }
+
+    h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.8rem, 7vw, 5.5rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -2px;
+      margin-bottom: 24px;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+
+    h1 .accent { color: var(--accent); }
+    h1 .dim { color: var(--muted); }
+
+    .hero-sub {
+      font-size: clamp(0.9rem, 2vw, 1.1rem);
+      color: var(--muted); max-width: 520px;
+      line-height: 1.7; margin-bottom: 48px;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+
+    .hero-cta {
+      display: flex; gap: 16px; flex-wrap: wrap; justify-content: center;
+      animation: fadeUp 0.6s 0.3s ease both;
+    }
+
+    .btn-primary {
+      background: var(--accent); color: #080a0f;
+      padding: 14px 32px; border-radius: 8px;
+      font-family: 'Syne', sans-serif; font-weight: 700;
+      font-size: 0.95rem; text-decoration: none;
+      transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-primary:hover { background: #00c98c; transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,229,160,0.3); }
+
+    .btn-secondary {
+      background: transparent; color: var(--text);
+      padding: 14px 32px; border-radius: 8px;
+      border: 1px solid var(--border);
+      font-family: 'Syne', sans-serif; font-weight: 700;
+      font-size: 0.95rem; text-decoration: none;
+      transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+    }
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Glow orb */
+    .orb {
+      position: absolute; border-radius: 50%;
+      filter: blur(120px); pointer-events: none;
+    }
+    .orb-1 { width: 500px; height: 500px; background: rgba(0,229,160,0.06); top: 10%; left: -10%; }
+    .orb-2 { width: 400px; height: 400px; background: rgba(0,102,255,0.05); bottom: 10%; right: -5%; }
+
+    /* ── STATS ── */
+    .stats {
+      position: relative; z-index: 1;
+      display: flex; justify-content: center; gap: 0;
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      animation: fadeUp 0.6s 0.4s ease both;
+    }
+
+    .stat {
+      flex: 1; max-width: 220px;
+      padding: 40px 32px; text-align: center;
+      border-right: 1px solid var(--border);
+    }
+    .stat:last-child { border-right: none; }
+
+    .stat-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.2rem; font-weight: 800;
+      color: var(--accent); margin-bottom: 6px;
+    }
+    .stat-label { font-size: 0.76rem; color: var(--muted); }
+
+    /* ── HOW IT WORKS ── */
+    section {
+      position: relative; z-index: 1;
+      padding: 100px 60px;
+    }
+
+    .section-tag {
+      font-size: 0.72rem; color: var(--accent);
+      text-transform: uppercase; letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800; letter-spacing: -1px;
+      margin-bottom: 16px;
+    }
+
+    .section-sub { color: var(--muted); font-size: 0.9rem; max-width: 480px; line-height: 1.7; margin-bottom: 64px; }
+
+    .steps {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 2px; background: var(--border);
+      border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+    }
+
+    .step {
+      background: var(--surface);
+      padding: 40px 32px;
+      transition: background 0.2s;
+    }
+    .step:hover { background: #131720; }
+
+    .step-num {
+      font-family: 'Syne', sans-serif;
+      font-size: 3rem; font-weight: 800;
+      color: rgba(0,229,160,0.12);
+      margin-bottom: 16px; line-height: 1;
+    }
+
+    .step-icon { font-size: 1.8rem; margin-bottom: 16px; }
+
+    .step-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1rem; font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .step-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.7; }
+
+    /* ── FEATURES ── */
+    .features-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .feature-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 32px;
+      transition: all 0.2s;
+    }
+    .feature-card:hover { border-color: rgba(0,229,160,0.3); transform: translateY(-2px); }
+
+    .feature-icon { font-size: 1.8rem; margin-bottom: 16px; }
+    .feature-title { font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700; margin-bottom: 10px; }
+    .feature-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.7; }
+
+    /* ── CTA SECTION ── */
+    .cta-section {
+      text-align: center;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cta-section h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.8rem, 4vw, 2.8rem);
+      font-weight: 800; letter-spacing: -1px;
+      margin-bottom: 16px;
+    }
+
+    .cta-section p { color: var(--muted); font-size: 0.9rem; margin-bottom: 40px; }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative; z-index: 1;
+      padding: 40px 60px;
+      display: flex; align-items: center; justify-content: space-between;
+      border-top: 1px solid var(--border);
+      font-size: 0.76rem; color: var(--muted);
+    }
+
+    .footer-logo {
+      font-family: 'Syne', sans-serif; font-weight: 800;
+      color: var(--accent); font-size: 0.9rem;
+    }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 768px) {
+      nav { padding: 16px 24px; }
+      .nav-links { display: none; }
+      section { padding: 60px 24px; }
+      .stats { flex-wrap: wrap; }
+      .stat { min-width: 140px; }
+      footer { flex-direction: column; gap: 12px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">📦 Smart<span>Point</span></div>
+  <div class="nav-links">
+    <a href="#cara-kerja">Cara Kerja</a>
+    <a href="#fitur">Fitur</a>
+    <a href="/admin">Admin</a>
+  </div>
+  <a href="#cara-kerja" class="btn-nav">Lihat Demo →</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+
+  <div class="hero-badge">🚀 Solusi Logistik Last-Mile Indonesia</div>
+
+  <h1>
+    Alamat rumah<br>
+    <span class="accent">jadi QR Code.</span><br>
+    <span class="dim">Kurir langsung navigasi.</span>
+  </h1>
+
+  <p class="hero-sub">
+    SmartPoint mengubah alamat teks yang ambigu menjadi titik GPS presisi.
+    Kurir scan QR → langsung navigasi ke lokasi. Tanpa salah alamat, tanpa telpon berkali-kali.
+  </p>
+
+  <div class="hero-cta">
+    <a href="#cara-kerja" class="btn-primary">📍 Lihat Cara Kerja</a>
+    <a href="/admin" class="btn-secondary">🔐 Masuk Dashboard</a>
+  </div>
+</div>
+
+<!-- STATS -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-num">0%</div>
+    <div class="stat-label">Salah alamat</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">3 dtk</div>
+    <div class="stat-label">Scan ke navigasi</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">100%</div>
+    <div class="stat-label">Presisi GPS</div>
+  </div>
+  <div class="stat">
+    <div class="stat-num">∞</div>
+    <div class="stat-label">Skalabilitas</div>
+  </div>
+</div>
+
+<!-- CARA KERJA -->
+<section id="cara-kerja">
+  <div class="section-tag">// Cara Kerja</div>
+  <h2 class="section-title">Simpel. Cepat. Presisi.</h2>
+  <p class="section-sub">Dari daftar alamat sampai kurir navigasi, semua otomatis dalam hitungan detik.</p>
+
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <div class="step-icon">📝</div>
+      <div class="step-title">Input Alamat</div>
+      <div class="step-desc">Admin input nama penerima, pin lokasi di peta, dan patokan visual rumah. Foto bisa diupload langsung.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <div class="step-icon">⚡</div>
+      <div class="step-title">QR Otomatis</div>
+      <div class="step-desc">Sistem langsung generate QR Code unik yang terhubung ke koordinat GPS presisi lokasi penerima.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <div class="step-icon">📦</div>
+      <div class="step-title">Tempel ke Paket</div>
+      <div class="step-desc">QR Code dicetak dan ditempel ke paket. Satu QR untuk satu alamat penerima secara permanen.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">04</div>
+      <div class="step-icon">🗺️</div>
+      <div class="step-title">Kurir Navigasi</div>
+      <div class="step-desc">Kurir scan QR → muncul foto rumah + patokan visual → klik navigasi → langsung ke lokasi tepat.</div>
+    </div>
+  </div>
+</section>
+
+<!-- FITUR -->
+<section id="fitur" style="background: var(--surface); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+  <div class="section-tag">// Fitur Unggulan</div>
+  <h2 class="section-title">Dibangun untuk skala besar.</h2>
+  <p class="section-sub">Semua yang dibutuhkan jasa logistik modern untuk operasional yang efisien.</p>
+
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">📍</div>
+      <div class="feature-title">Pin Lokasi di Peta</div>
+      <div class="feature-desc">Input alamat cukup klik peta — tidak perlu copy-paste koordinat. Akurat sampai level meter.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📷</div>
+      <div class="feature-title">Foto Rumah</div>
+      <div class="feature-desc">Upload foto pagar atau tampak depan rumah. Kurir langsung tahu mana rumahnya sebelum tiba.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">QR Generate Otomatis</div>
+      <div class="feature-desc">Setiap alamat baru langsung punya QR Code — bisa langsung diprint dan ditempel ke paket.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🗂️</div>
+      <div class="feature-title">Dashboard Admin</div>
+      <div class="feature-desc">Kelola semua Smart Point dari satu dashboard — tambah, edit, hapus, dan cari alamat dengan mudah.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔌</div>
+      <div class="feature-title">Siap Integrasi API</div>
+      <div class="feature-desc">Sistem logistik yang sudah ada bisa integrasi via API — input data massal tanpa perlu manual.</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📱</div>
+      <div class="feature-title">Mobile Friendly</div>
+      <div class="feature-desc">Halaman kurir dioptimalkan untuk HP — scan QR, lihat info, navigasi. Semua dalam satu layar.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="section-tag" style="text-align:center">// Mulai Sekarang</div>
+  <h2>Siap tingkatkan akurasi pengiriman?</h2>
+  <p>Hubungi kami untuk demo langsung atau mulai integrasi hari ini.</p>
+  <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+    <a href="/admin" class="btn-primary">🔐 Masuk Dashboard</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">📦 SmartPoint</div>
+  <div>Sistem Alamat Cerdas untuk Logistik Indonesia</div>
+  <div>© 2026 SmartPoint</div>
+</footer>
+
+</body>
+</html>
