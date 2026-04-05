@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Point — {{ alamat.nama_penerima }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent: #00e5a0; --warn: #ffc107; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            background: #f0f4f8; font-family: 'DM Mono', monospace;
+            min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px;
+        }
+        .card {
+            background: white; border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+            width: 100%; max-width: 400px; overflow: hidden;
+        }
+
+        /* Foto rumah */
+        .foto-rumah {
+            width: 100%; height: 220px; object-fit: cover;
+            display: block; background: #eee;
+        }
+        .foto-placeholder {
+            width: 100%; height: 160px; background: #f4f6f8;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; color: #ccc;
+        }
+
+        .content { padding: 28px; }
+
+        .header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+        .logo-badge {
+            background: #0d0f14; color: var(--accent);
+            font-family: 'Syne', sans-serif; font-weight: 800;
+            font-size: 0.72rem; padding: 4px 10px; border-radius: 6px;
+        }
+        .kode { font-size: 0.78rem; color: #999; }
+
+        h2 { font-family: 'Syne', sans-serif; font-size: 1.4rem; font-weight: 800; color: #0d0f14; margin-bottom: 4px; }
+        .sub { font-size: 0.76rem; color: #aaa; margin-bottom: 18px; }
+
+        hr { border: none; border-top: 1px solid #eee; margin: 16px 0; }
+
+        .patokan {
+            background: #fffbea; border-left: 4px solid var(--warn);
+            border-radius: 8px; padding: 12px 14px;
+            font-size: 0.86rem; color: #555; margin-bottom: 20px; line-height: 1.6;
+        }
+        .patokan strong {
+            display: block; color: #333; margin-bottom: 4px;
+            font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        .btn-nav {
+            display: block; background: var(--accent); color: #0d0f14;
+            text-align: center; padding: 16px; border-radius: 12px;
+            text-decoration: none; font-family: 'Syne', sans-serif;
+            font-weight: 800; font-size: 1rem; transition: all 0.2s;
+        }
+        .btn-nav:hover { background: #00c98c; transform: translateY(-2px); }
+
+        .footer { text-align: center; margin-top: 16px; font-size: 0.7rem; color: #ccc; padding-bottom: 4px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+
+        {% if alamat.link_foto_rumah %}
+            <img class="foto-rumah" src="/static/foto_rumah/{{ alamat.link_foto_rumah }}" alt="Foto rumah {{ alamat.nama_penerima }}">
+        {% else %}
+            <div class="foto-placeholder">🏠</div>
+        {% endif %}
+
+        <div class="content">
+            <div class="header">
+                <span class="logo-badge">📦 SmartPoint</span>
+                <span class="kode">{{ alamat.kode_unik }}</span>
+            </div>
+
+            <h2>📍 {{ alamat.nama_penerima }}</h2>
+            <p class="sub">Destinasi pengiriman terverifikasi</p>
+
+            <hr>
+
+            <div class="patokan">
+                <strong>🏠 Patokan Rumah</strong>
+                {{ alamat.patokan_visual }}
+            </div>
+
+            <a href="https://www.google.com/maps?q={{ alamat.latitude }},{{ alamat.longitude }}" class="btn-nav">
+                🗺️ Mulai Navigasi Google Maps
+            </a>
+
+            <p class="footer">Powered by Startup Logistik · SmartPoint System</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin — Smart Point Logistik</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #161920;
+      --border: #262b36;
+      --accent: #00e5a0;
+      --accent2: #0077ff;
+      --warn: #ff4d4d;
+      --text: #e8eaf0;
+      --muted: #6b7385;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      min-height: 100vh;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      position: fixed; top: 0; left: 0;
+      width: 220px; height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 32px 20px;
+      display: flex; flex-direction: column; gap: 8px;
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.1rem; font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.5px;
+      margin-bottom: 24px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .logo span { color: var(--text); }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      transition: all 0.2s;
+    }
+    .nav-item:hover, .nav-item.active {
+      background: rgba(0,229,160,0.08);
+      color: var(--accent);
+    }
+    .nav-item .icon { font-size: 1rem; }
+
+    .sidebar-footer {
+      margin-top: auto;
+      font-size: 0.72rem;
+      color: var(--muted);
+      padding: 10px 14px;
+    }
+
+    /* ── MAIN ── */
+    .main {
+      margin-left: 220px;
+      padding: 36px 40px;
+      min-height: 100vh;
+    }
+
+    .topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 36px;
+    }
+
+    .page-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.6rem; font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .page-title span { color: var(--accent); }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 20px;
+      border-radius: 8px;
+      font-family: 'DM Mono', monospace;
+      font-size: 0.82rem; font-weight: 500;
+      cursor: pointer; border: none;
+      text-decoration: none;
+      transition: all 0.18s;
+    }
+    .btn-primary {
+      background: var(--accent); color: #0d0f14;
+    }
+    .btn-primary:hover { background: #00c98c; transform: translateY(-1px); }
+    .btn-danger {
+      background: rgba(255,77,77,0.12); color: var(--warn);
+      border: 1px solid rgba(255,77,77,0.3);
+    }
+    .btn-danger:hover { background: rgba(255,77,77,0.22); }
+    .btn-ghost {
+      background: rgba(255,255,255,0.05); color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.1); }
+    .btn-qr {
+      background: rgba(0,119,255,0.12); color: var(--accent2);
+      border: 1px solid rgba(0,119,255,0.3);
+    }
+    .btn-qr:hover { background: rgba(0,119,255,0.22); }
+
+    /* ── STATS ── */
+    .stats {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 16px; margin-bottom: 32px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+    }
+    .stat-label {
+      font-size: 0.72rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem; font-weight: 800;
+      color: var(--accent);
+    }
+    .stat-sub { font-size: 0.76rem; color: var(--muted); margin-top: 4px; }
+
+    /* ── FLASH MESSAGES ── */
+    .flash { padding: 12px 18px; border-radius: 8px; margin-bottom: 20px; font-size: 0.84rem; }
+    .flash.success { background: rgba(0,229,160,0.1); border: 1px solid rgba(0,229,160,0.3); color: var(--accent); }
+    .flash.error   { background: rgba(255,77,77,0.1);  border: 1px solid rgba(255,77,77,0.3);  color: var(--warn); }
+
+    /* ── TABLE ── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    .table-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+    .table-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.95rem; font-weight: 700;
+    }
+
+    .search-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 14px;
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-size: 0.82rem;
+      width: 220px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-box:focus { border-color: var(--accent); }
+    .search-box::placeholder { color: var(--muted); }
+
+    table { width: 100%; border-collapse: collapse; }
+    thead tr { background: rgba(255,255,255,0.02); }
+    th {
+      text-align: left;
+      padding: 14px 20px;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--muted);
+      font-weight: 500;
+      border-bottom: 1px solid var(--border);
+    }
+    td {
+      padding: 16px 20px;
+      font-size: 0.84rem;
+      border-bottom: 1px solid rgba(255,255,255,0.04);
+      vertical-align: middle;
+    }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+
+    .badge-kode {
+      display: inline-block;
+      background: rgba(0,229,160,0.1);
+      color: var(--accent);
+      padding: 3px 10px;
+      border-radius: 4px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      border: 1px solid rgba(0,229,160,0.2);
+    }
+
+    .coords { color: var(--muted); font-size: 0.78rem; }
+
+    .actions { display: flex; gap: 8px; }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .empty-state p { font-size: 0.88rem; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 900px) {
+      .sidebar { display: none; }
+      .main { margin-left: 0; padding: 20px; }
+      .stats { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="logo">📦 <span>Smart</span>Point</div>
+  <a href="/admin" class="nav-item active">
+    <span class="icon">🗂️</span> Dashboard
+  </a>
+  <a href="/admin/tambah" class="nav-item">
+    <span class="icon">➕</span> Tambah Alamat
+  </a>
+  <div class="sidebar-footer">
+    v1.1.0 — Startup Logistik
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <h1 class="page-title">Admin <span>Dashboard</span></h1>
+    <a href="/admin/tambah" class="btn btn-primary">➕ Tambah Smart Point</a>
+  </div>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="flash {{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <!-- Stats -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-label">Total Smart Point</div>
+      <div class="stat-value">{{ total }}</div>
+      <div class="stat-sub">Alamat terdaftar</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Status Sistem</div>
+      <div class="stat-value" style="color:#00e5a0; font-size:1.2rem; padding-top:6px;">● ONLINE</div>
+      <div class="stat-sub">Database terhubung</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">QR Code</div>
+      <div class="stat-value">{{ total }}</div>
+      <div class="stat-sub">Siap scan & navigasi</div>
+    </div>
+  </div>
+
+  <!-- Table -->
+  <div class="table-wrap">
+    <div class="table-header">
+      <span class="table-title">Semua Smart Point</span>
+      <input class="search-box" type="text" id="searchInput" placeholder="🔍 Cari nama / kode...">
+    </div>
+
+    {% if smart_points %}
+    <table id="mainTable">
+      <thead>
+        <tr>
+          <th>Kode</th>
+          <th>Nama Penerima</th>
+          <th>Koordinat</th>
+          <th>Patokan Visual</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sp in smart_points %}
+        <tr>
+          <td><span class="badge-kode">{{ sp.kode_unik }}</span></td>
+          <td>{{ sp.nama_penerima }}</td>
+          <td class="coords">{{ sp.latitude }}, {{ sp.longitude }}</td>
+          <td>{{ sp.patokan_visual }}</td>
+          <td>
+            <div class="actions">
+              <a href="/admin/qr/{{ sp.kode_unik }}" class="btn btn-qr" title="Lihat QR">📷 QR</a>
+              <a href="/admin/edit/{{ sp.id }}" class="btn btn-ghost">✏️</a>
+              <form method="POST" action="/admin/hapus/{{ sp.id }}" onsubmit="return confirm('Hapus {{ sp.nama_penerima }}?')">
+                <button type="submit" class="btn btn-danger">🗑️</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <div class="icon">📭</div>
+      <p>Belum ada Smart Point. <a href="/admin/tambah" style="color:var(--accent)">Tambah sekarang →</a></p>
+    </div>
+    {% endif %}
+  </div>
+</main>
+
+<script>
+  // Live search
+  document.getElementById('searchInput').addEventListener('input', function() {
+    const q = this.value.toLowerCase();
+    document.querySelectorAll('#mainTable tbody tr').forEach(row => {
+      row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+    });
+  });
+</script>
+</body>
+</html>

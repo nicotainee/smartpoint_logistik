@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tambah Smart Point</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <style>
+    :root {
+      --bg: #0d0f14; --surface: #161920; --border: #262b36;
+      --accent: #00e5a0; --text: #e8eaf0; --muted: #6b7385;
+      --warn: #ff4d4d; --radius: 12px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'DM Mono', monospace; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 40px 20px; }
+
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 40px; width: 100%; max-width: 580px; }
+
+    .back-link {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      color: var(--text); text-decoration: none; font-size: 0.84rem; font-weight: 500;
+      padding: 10px 18px; border-radius: 8px; margin-bottom: 28px; transition: all 0.2s;
+    }
+    .back-link:hover { background: rgba(0,229,160,0.08); border-color: var(--accent); color: var(--accent); transform: translateX(-2px); }
+
+    h2 { font-family: 'Syne', sans-serif; font-size: 1.5rem; font-weight: 800; margin-bottom: 6px; }
+    .subtitle { color: var(--muted); font-size: 0.82rem; margin-bottom: 32px; }
+
+    .form-group { margin-bottom: 20px; }
+    label { display: block; font-size: 0.76rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+
+    input[type=text], textarea {
+      width: 100%; background: var(--bg); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 16px;
+      color: var(--text); font-family: 'DM Mono', monospace; font-size: 0.88rem;
+      outline: none; transition: border-color 0.2s;
+    }
+    input:focus, textarea:focus { border-color: var(--accent); }
+    input::placeholder, textarea::placeholder { color: var(--muted); }
+    textarea { resize: vertical; min-height: 80px; }
+
+    /* Search alamat */
+    .search-wrap { position: relative; }
+    .search-wrap input { padding-right: 44px; }
+    .search-btn {
+      position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+      background: var(--accent); border: none; border-radius: 6px;
+      color: #0d0f14; font-size: 0.9rem; padding: 6px 10px; cursor: pointer;
+      transition: background 0.2s;
+    }
+    .search-btn:hover { background: #00c98c; }
+
+    .suggestions {
+      position: absolute; z-index: 1000; width: 100%;
+      background: #1e2330; border: 1px solid var(--border); border-radius: 8px;
+      margin-top: 4px; max-height: 200px; overflow-y: auto;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    .suggestion-item {
+      padding: 10px 14px; font-size: 0.82rem; cursor: pointer;
+      border-bottom: 1px solid rgba(255,255,255,0.04); transition: background 0.15s;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: rgba(0,229,160,0.08); color: var(--accent); }
+
+    /* Map */
+    #map {
+      width: 100%; height: 280px; border-radius: 10px;
+      border: 1px solid var(--border); margin-bottom: 8px;
+      z-index: 1;
+    }
+    .map-hint { font-size: 0.72rem; color: var(--muted); margin-bottom: 16px; }
+
+    /* Koordinat readonly */
+    .coords-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 8px; }
+    .coord-box {
+      background: rgba(0,229,160,0.05); border: 1px solid rgba(0,229,160,0.2);
+      border-radius: 8px; padding: 10px 14px;
+      font-size: 0.82rem; color: var(--accent);
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .coord-box span { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .hint { font-size: 0.72rem; color: var(--muted); margin-top: 6px; }
+
+    /* Upload foto */
+    .upload-area {
+      border: 2px dashed var(--border); border-radius: 10px;
+      padding: 24px 20px; text-align: center; cursor: pointer;
+      transition: all 0.2s; position: relative;
+    }
+    .upload-area:hover { border-color: var(--accent); background: rgba(0,229,160,0.04); }
+    .upload-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .upload-icon { font-size: 1.8rem; margin-bottom: 6px; }
+    .upload-text { font-size: 0.8rem; color: var(--muted); }
+    .upload-text span { color: var(--accent); }
+    #preview-wrap { margin-top: 10px; display: none; }
+    #preview-wrap img { width: 100%; max-height: 160px; object-fit: cover; border-radius: 8px; border: 1px solid var(--border); }
+
+    .btn-submit {
+      width: 100%; padding: 14px;
+      background: var(--accent); color: #0d0f14;
+      border: none; border-radius: 8px;
+      font-family: 'Syne', sans-serif; font-size: 0.95rem; font-weight: 700;
+      cursor: pointer; margin-top: 8px; transition: all 0.2s;
+    }
+    .btn-submit:hover { background: #00c98c; transform: translateY(-1px); }
+    .btn-submit:disabled { background: var(--muted); cursor: not-allowed; transform: none; }
+
+    .flash { padding: 12px 16px; border-radius: 8px; margin-bottom: 20px; font-size: 0.84rem; }
+    .flash.error { background: rgba(255,77,77,0.1); border: 1px solid rgba(255,77,77,0.3); color: var(--warn); }
+    .flash.success { background: rgba(0,229,160,0.1); border: 1px solid rgba(0,229,160,0.3); color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="card">
+  <a href="/admin" class="back-link">← Kembali ke Dashboard</a>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="flash {{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <h2>Tambah Smart Point</h2>
+  <p class="subtitle">Cari alamat atau klik peta — koordinat otomatis terisi.</p>
+
+  <form method="POST" enctype="multipart/form-data" id="mainForm">
+
+    <div class="form-group">
+      <label>Kode Unik</label>
+      <input type="text" name="kode_unik" placeholder="Contoh: BDG002" required>
+      <p class="hint">Kode ini yang akan jadi URL scan kurir: /cek/BDG002</p>
+    </div>
+
+    <div class="form-group">
+      <label>Nama Penerima</label>
+      <input type="text" name="nama_penerima" placeholder="Budi Santoso" required>
+    </div>
+
+    <!-- Search Alamat -->
+    <div class="form-group">
+      <label>Cari Alamat</label>
+      <div class="search-wrap">
+        <input type="text" id="searchInput" placeholder="Ketik nama jalan, daerah, atau tempat..." autocomplete="off">
+        <button type="button" class="search-btn" onclick="cariAlamat()">🔍</button>
+        <div class="suggestions" id="suggestions" style="display:none"></div>
+      </div>
+    </div>
+
+    <!-- Peta -->
+    <div class="form-group">
+      <label>Pin Lokasi</label>
+      <div id="map"></div>
+      <p class="map-hint">💡 Klik peta atau geser pin untuk presisi lebih akurat</p>
+
+      <div class="coords-row">
+        <div class="coord-box">
+          <span>Latitude</span>
+          <span id="lat-display">— belum dipilih —</span>
+        </div>
+        <div class="coord-box">
+          <span>Longitude</span>
+          <span id="lon-display">— belum dipilih —</span>
+        </div>
+      </div>
+
+      <!-- Hidden inputs yang dikirim ke Flask -->
+      <input type="hidden" name="latitude" id="lat-input" required>
+      <input type="hidden" name="longitude" id="lon-input" required>
+    </div>
+
+    <div class="form-group">
+      <label>Patokan Visual</label>
+      <textarea name="patokan_visual" placeholder="Pagar besi warna hijau, rumah cat putih, sebelah warung Bu Sari"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label>Foto Rumah / Patokan</label>
+      <div class="upload-area">
+        <input type="file" name="foto_rumah" id="fotoInput" accept="image/*">
+        <div class="upload-icon">📷</div>
+        <p class="upload-text">Klik atau drag foto ke sini<br><span>JPG, PNG, WEBP</span></p>
+      </div>
+      <div id="preview-wrap">
+        <img id="preview-img" src="" alt="Preview foto">
+      </div>
+    </div>
+
+    <button type="submit" class="btn-submit" id="submitBtn">➕ Simpan & Generate QR Code</button>
+  </form>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+  // ── MAP SETUP ──
+  const map = L.map('map').setView([-6.9175, 107.6191], 13); // Default: Bandung
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  let marker = null;
+
+  function setPin(lat, lng) {
+    if (marker) map.removeLayer(marker);
+    marker = L.marker([lat, lng], { draggable: true }).addTo(map);
+    updateKoordinat(lat, lng);
+
+    marker.on('dragend', function(e) {
+      const pos = e.target.getLatLng();
+      updateKoordinat(pos.lat, pos.lng);
+    });
+  }
+
+  function updateKoordinat(lat, lng) {
+    const latR = parseFloat(lat).toFixed(7);
+    const lngR = parseFloat(lng).toFixed(7);
+    document.getElementById('lat-display').textContent = latR;
+    document.getElementById('lon-display').textContent = lngR;
+    document.getElementById('lat-input').value = latR;
+    document.getElementById('lon-input').value = lngR;
+  }
+
+  // Klik peta = taruh pin
+  map.on('click', function(e) {
+    setPin(e.latlng.lat, e.latlng.lng);
+  });
+
+  // ── SEARCH ALAMAT (Nominatim OpenStreetMap) ──
+  let searchTimeout = null;
+
+  document.getElementById('searchInput').addEventListener('input', function() {
+    clearTimeout(searchTimeout);
+    const q = this.value.trim();
+    if (q.length < 3) {
+      document.getElementById('suggestions').style.display = 'none';
+      return;
+    }
+    searchTimeout = setTimeout(() => cariAlamat(), 500);
+  });
+
+  document.getElementById('searchInput').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); cariAlamat(); }
+  });
+
+  async function cariAlamat() {
+    const q = document.getElementById('searchInput').value.trim();
+    if (!q) return;
+
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=5&countrycodes=id`, {
+        headers: { 'Accept-Language': 'id' }
+      });
+      const results = await res.json();
+      tampilkanSuggestions(results);
+    } catch(e) {
+      console.error('Search error:', e);
+    }
+  }
+
+  function tampilkanSuggestions(results) {
+    const box = document.getElementById('suggestions');
+    if (!results.length) {
+      box.innerHTML = '<div class="suggestion-item" style="color:var(--muted)">Alamat tidak ditemukan</div>';
+      box.style.display = 'block';
+      return;
+    }
+
+    box.innerHTML = results.map((r, i) =>
+      `<div class="suggestion-item" onclick="pilihAlamat(${r.lat}, ${r.lon}, '${r.display_name.replace(/'/g, "\\'")}')">
+        📍 ${r.display_name}
+      </div>`
+    ).join('');
+    box.style.display = 'block';
+  }
+
+  function pilihAlamat(lat, lon, nama) {
+    document.getElementById('searchInput').value = nama;
+    document.getElementById('suggestions').style.display = 'none';
+    map.setView([lat, lon], 17);
+    setPin(lat, lon);
+  }
+
+  // Tutup suggestions kalau klik di luar
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.search-wrap')) {
+      document.getElementById('suggestions').style.display = 'none';
+    }
+  });
+
+  // ── PREVIEW FOTO ──
+  document.getElementById('fotoInput').addEventListener('change', function() {
+    const file = this.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = e => {
+        document.getElementById('preview-img').src = e.target.result;
+        document.getElementById('preview-wrap').style.display = 'block';
+        document.querySelector('.upload-text').innerHTML = '<span>' + file.name + '</span>';
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // ── VALIDASI: Wajib pilih lokasi sebelum submit ──
+  document.getElementById('mainForm').addEventListener('submit', function(e) {
+    if (!document.getElementById('lat-input').value) {
+      e.preventDefault();
+      alert('⚠️ Pilih lokasi dulu di peta sebelum menyimpan!');
+    }
+  });
+</script>
+</body>
+</html>
