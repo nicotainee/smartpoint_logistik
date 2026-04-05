@@ -14,15 +14,15 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-DB_CONFIG = {
-    "host": "localhost",
-    "user": "root",
-    "password": "Fathao;ifh02",
-    "database": "startup_logistik"
-}
 
 def get_db():
-    return mysql.connector.connect(**DB_CONFIG)
+    return mysql.connector.connect(
+        host=os.environ.get('MYSQLHOST', 'localhost'),
+        user=os.environ.get('MYSQLUSER', 'root'),
+        password=os.environ.get('MYSQLPASSWORD', ''),
+        database=os.environ.get('MYSQLDATABASE', 'railway'),
+        port=int(os.environ.get('MYSQLPORT', 3306))
+    )
 
 @app.route('/cek/<kode_unik>')
 def cek_alamat(kode_unik):
