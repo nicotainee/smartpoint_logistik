@@ -65,7 +65,7 @@
     </div>
     <div class="form-group">
       <label>Password</label>
-      <input type="password" name="password" placeholder="••••••••" required>
+      <div style="position:relative"><input type="password" name="password" id="passwordInput" placeholder="••••••••" required style="padding-right:44px"><button type="button" onclick="var i=document.getElementById('passwordInput');i.type=i.type==='password'?'text':'password';this.textContent=i.type==='password'?'👁️':'🙈'" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:1rem">👁️</button></div>
     </div>
     <button type="submit" class="btn-login">🔐 Login</button>
   </form>
