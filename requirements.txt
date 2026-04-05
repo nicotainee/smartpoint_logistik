@@ -3,3 +3,5 @@ mysql-connector-python
 qrcode[pil]
 werkzeug
 gunicorn
+openpyxl
+xlsxwriter
