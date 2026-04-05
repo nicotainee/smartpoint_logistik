@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Upload Excel — SmartPoint</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root { --bg:#0d0f14; --surface:#161920; --border:#262b36; --accent:#00e5a0; --text:#e8eaf0; --muted:#6b7385; --warn:#ff4d4d; --radius:12px; }
+    * { box-sizing:border-box; margin:0; padding:0; }
+    body { background:var(--bg); color:var(--text); font-family:'DM Mono',monospace; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:40px 20px; }
+
+    .card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:40px; width:100%; max-width:580px; }
+
+    .back-link { display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,0.05); border:1px solid var(--border); color:var(--text); text-decoration:none; font-size:0.84rem; font-weight:500; padding:10px 18px; border-radius:8px; margin-bottom:28px; transition:all 0.2s; }
+    .back-link:hover { background:rgba(0,229,160,0.08); border-color:var(--accent); color:var(--accent); transform:translateX(-2px); }
+
+    h2 { font-family:'Syne',sans-serif; font-size:1.5rem; font-weight:800; margin-bottom:6px; }
+    .subtitle { color:var(--muted); font-size:0.82rem; margin-bottom:32px; }
+
+    /* Template download */
+    .template-box {
+      background:rgba(0,229,160,0.05); border:1px solid rgba(0,229,160,0.2);
+      border-radius:10px; padding:20px 24px;
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:28px;
+    }
+    .template-info { font-size:0.82rem; }
+    .template-info strong { display:block; color:var(--text); margin-bottom:4px; font-family:'Syne',sans-serif; }
+    .template-info span { color:var(--muted); font-size:0.76rem; }
+    .btn-download { display:inline-flex; align-items:center; gap:6px; background:var(--accent); color:#0d0f14; padding:8px 16px; border-radius:6px; text-decoration:none; font-family:'Syne',sans-serif; font-weight:700; font-size:0.8rem; transition:all 0.2s; white-space:nowrap; }
+    .btn-download:hover { background:#00c98c; }
+
+    /* Format tabel */
+    .format-table { width:100%; border-collapse:collapse; margin-bottom:28px; font-size:0.78rem; }
+    .format-table th { text-align:left; padding:10px 14px; background:rgba(255,255,255,0.03); color:var(--muted); font-size:0.7rem; text-transform:uppercase; letter-spacing:0.8px; border-bottom:1px solid var(--border); }
+    .format-table td { padding:10px 14px; border-bottom:1px solid rgba(255,255,255,0.04); }
+    .format-table tr:last-child td { border-bottom:none; }
+    .required { color:var(--accent); font-size:0.68rem; }
+    .optional { color:var(--muted); font-size:0.68rem; }
+
+    /* Upload area */
+    .upload-area {
+      border:2px dashed var(--border); border-radius:10px;
+      padding:40px 20px; text-align:center; cursor:pointer;
+      transition:all 0.2s; position:relative; margin-bottom:20px;
+    }
+    .upload-area:hover, .upload-area.dragover { border-color:var(--accent); background:rgba(0,229,160,0.04); }
+    .upload-area input[type=file] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+    .upload-icon { font-size:2.5rem; margin-bottom:12px; }
+    .upload-text { font-size:0.84rem; color:var(--muted); }
+    .upload-text span { color:var(--accent); }
+    #file-name { margin-top:10px; font-size:0.8rem; color:var(--accent); display:none; }
+
+    .btn-submit { width:100%; padding:14px; background:var(--accent); color:#0d0f14; border:none; border-radius:8px; font-family:'Syne',sans-serif; font-size:0.95rem; font-weight:700; cursor:pointer; transition:all 0.2s; }
+    .btn-submit:hover { background:#00c98c; transform:translateY(-1px); }
+    .btn-submit:disabled { background:var(--muted); cursor:not-allowed; transform:none; }
+
+    /* Progress */
+    #progress-wrap { display:none; margin-top:20px; }
+    .progress-bar-bg { background:var(--bg); border-radius:100px; height:8px; overflow:hidden; margin-bottom:8px; }
+    .progress-bar { height:100%; background:var(--accent); border-radius:100px; width:0%; transition:width 0.3s; }
+    .progress-text { font-size:0.78rem; color:var(--muted); text-align:center; }
+
+    /* Hasil */
+    #hasil-wrap { display:none; margin-top:24px; }
+    .hasil-card { border-radius:10px; padding:20px 24px; margin-bottom:12px; }
+    .hasil-success { background:rgba(0,229,160,0.08); border:1px solid rgba(0,229,160,0.2); }
+    .hasil-error { background:rgba(255,77,77,0.08); border:1px solid rgba(255,77,77,0.2); }
+    .hasil-title { font-family:'Syne',sans-serif; font-weight:700; margin-bottom:8px; }
+    .hasil-success .hasil-title { color:var(--accent); }
+    .hasil-error .hasil-title { color:var(--warn); }
+    .hasil-list { font-size:0.78rem; color:var(--muted); line-height:1.8; }
+
+    .flash { padding:12px 16px; border-radius:8px; margin-bottom:20px; font-size:0.84rem; }
+    .flash.success { background:rgba(0,229,160,0.1); border:1px solid rgba(0,229,160,0.3); color:var(--accent); }
+    .flash.error { background:rgba(255,77,77,0.1); border:1px solid rgba(255,77,77,0.3); color:var(--warn); }
+  </style>
+</head>
+<body>
+<div class="card">
+  <a href="/admin" class="back-link">← Kembali ke Dashboard</a>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="flash {{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <h2>Upload Excel Massal</h2>
+  <p class="subtitle">Upload file Excel berisi banyak alamat — semua QR Code langsung dibuat otomatis.</p>
+
+  <!-- Download template -->
+  <div class="template-box">
+    <div class="template-info">
+      <strong>📋 Template Excel</strong>
+      <span>Download dulu, isi datanya, lalu upload balik</span>
+    </div>
+    <a href="/admin/template-excel" class="btn-download">⬇️ Download Template</a>
+  </div>
+
+  <!-- Format kolom -->
+  <table class="format-table">
+    <thead>
+      <tr>
+        <th>Kolom</th>
+        <th>Contoh</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>kode_unik</td><td>BDG001</td><td><span class="required">● Wajib</span></td></tr>
+      <tr><td>nama_penerima</td><td>Budi Santoso</td><td><span class="required">● Wajib</span></td></tr>
+      <tr><td>latitude</td><td>-6.974028</td><td><span class="required">● Wajib</span></td></tr>
+      <tr><td>longitude</td><td>107.630367</td><td><span class="required">● Wajib</span></td></tr>
+      <tr><td>patokan_visual</td><td>Pagar biru, rumah pojok</td><td><span class="optional">○ Opsional</span></td></tr>
+    </tbody>
+  </table>
+
+  <!-- Upload form -->
+  <form method="POST" enctype="multipart/form-data" id="uploadForm">
+    <div class="upload-area" id="uploadArea">
+      <input type="file" name="file_excel" id="fileInput" accept=".xlsx,.xls" required>
+      <div class="upload-icon">📊</div>
+      <p class="upload-text">Klik atau drag file Excel ke sini<br><span>.xlsx atau .xls</span></p>
+      <p id="file-name"></p>
+    </div>
+
+    <button type="submit" class="btn-submit" id="submitBtn">⚡ Proses & Generate Semua QR</button>
+  </form>
+
+  <!-- Progress -->
+  <div id="progress-wrap">
+    <div class="progress-bar-bg"><div class="progress-bar" id="progressBar"></div></div>
+    <p class="progress-text" id="progressText">Memproses...</p>
+  </div>
+
+  <!-- Hasil -->
+  {% if hasil %}
+  <div id="hasil-wrap" style="display:block">
+    {% if hasil.berhasil %}
+    <div class="hasil-card hasil-success">
+      <div class="hasil-title">✅ {{ hasil.berhasil|length }} alamat berhasil diimpor</div>
+      <div class="hasil-list">{{ hasil.berhasil | join(', ') }}</div>
+    </div>
+    {% endif %}
+    {% if hasil.gagal %}
+    <div class="hasil-card hasil-error">
+      <div class="hasil-title">❌ {{ hasil.gagal|length }} baris gagal</div>
+      <div class="hasil-list">
+        {% for g in hasil.gagal %}{{ g }}<br>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+
+<script>
+  const fileInput = document.getElementById('fileInput');
+  const fileName = document.getElementById('file-name');
+  const uploadArea = document.getElementById('uploadArea');
+
+  fileInput.addEventListener('change', function() {
+    if (this.files[0]) {
+      fileName.textContent = '📄 ' + this.files[0].name;
+      fileName.style.display = 'block';
+    }
+  });
+
+  // Drag & drop
+  uploadArea.addEventListener('dragover', e => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+  uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+  uploadArea.addEventListener('drop', e => {
+    e.preventDefault(); uploadArea.classList.remove('dragover');
+    fileInput.files = e.dataTransfer.files;
+    if (fileInput.files[0]) {
+      fileName.textContent = '📄 ' + fileInput.files[0].name;
+      fileName.style.display = 'block';
+    }
+  });
+
+  document.getElementById('uploadForm').addEventListener('submit', function() {
+    document.getElementById('submitBtn').disabled = true;
+    document.getElementById('submitBtn').textContent = '⏳ Memproses...';
+    document.getElementById('progress-wrap').style.display = 'block';
+    let w = 0;
+    const interval = setInterval(() => {
+      w = Math.min(w + Math.random() * 15, 90);
+      document.getElementById('progressBar').style.width = w + '%';
+      document.getElementById('progressText').textContent = 'Memproses data & generate QR Code...';
+    }, 400);
+  });
+</script>
+</body>
+</html>
