@@ -217,3 +217,111 @@ def lihat_qr(kode_unik):
 
 if __name__ == '__main__':
     app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+
+
+# ─── UPLOAD EXCEL MASSAL ───────────────────────────────────────────────────
+
+@app.route('/admin/upload-excel', methods=['GET', 'POST'])
+@login_required
+def upload_excel():
+    hasil = None
+    if request.method == 'POST':
+        if 'file_excel' not in request.files:
+            flash('Pilih file Excel dulu!', 'error')
+            return redirect(request.url)
+
+        file = request.files['file_excel']
+        if file.filename == '':
+            flash('Pilih file Excel dulu!', 'error')
+            return redirect(request.url)
+
+        try:
+            import openpyxl
+            wb = openpyxl.load_workbook(file)
+            ws = wb.active
+
+            headers = [str(cell.value).strip().lower() if cell.value else '' for cell in ws[1]]
+            required = ['kode_unik', 'nama_penerima', 'latitude', 'longitude']
+            for r in required:
+                if r not in headers:
+                    flash(f'Kolom "{r}" tidak ditemukan di Excel!', 'error')
+                    return redirect(request.url)
+
+            def col(row, name):
+                idx = headers.index(name)
+                val = row[idx].value
+                return str(val).strip() if val is not None else ''
+
+            conn = get_db()
+            cursor = conn.cursor()
+            berhasil = []
+            gagal = []
+
+            for i, row in enumerate(ws.iter_rows(min_row=2), start=2):
+                if not any(cell.value for cell in row):
+                    continue
+                kode = col(row, 'kode_unik')
+                nama = col(row, 'nama_penerima')
+                lat  = col(row, 'latitude')
+                lon  = col(row, 'longitude')
+                patokan = col(row, 'patokan_visual') if 'patokan_visual' in headers else ''
+
+                if not all([kode, nama, lat, lon]):
+                    gagal.append(f'Baris {i}: data tidak lengkap')
+                    continue
+
+                try:
+                    cursor.execute(
+                        "INSERT INTO smart_points (kode_unik, nama_penerima, latitude, longitude, patokan_visual) VALUES (%s,%s,%s,%s,%s)",
+                        (kode, nama, lat, lon, patokan)
+                    )
+                    conn.commit()
+
+                    # Generate QR
+                    maps_url = f"https://www.google.com/maps?q={lat},{lon}"
+                    img = qrcode.make(maps_url)
+                    img.save(os.path.join('static', f'QR_{kode}.png'))
+                    berhasil.append(kode)
+                except Exception as e:
+                    gagal.append(f'Baris {i} ({kode}): {str(e)[:60]}')
+
+            conn.close()
+            hasil = {'berhasil': berhasil, 'gagal': gagal}
+
+        except Exception as e:
+            flash(f'Error baca file: {e}', 'error')
+
+    return render_template('upload_excel.html', hasil=hasil)
+
+
+@app.route('/admin/template-excel')
+@login_required
+def template_excel():
+    import xlsxwriter, io
+    output = io.BytesIO()
+    wb = xlsxwriter.Workbook(output)
+    ws = wb.add_worksheet('SmartPoint')
+
+    # Header style
+    header_fmt = wb.add_format({'bold': True, 'bg_color': '#00e5a0', 'font_color': '#0d0f14', 'border': 1, 'align': 'center'})
+    example_fmt = wb.add_format({'bg_color': '#1a1f2e', 'font_color': '#a0a8c0', 'border': 1})
+
+    headers = ['kode_unik', 'nama_penerima', 'latitude', 'longitude', 'patokan_visual']
+    widths  = [15, 25, 15, 15, 40]
+    examples = [['BDG001', 'Budi Santoso', '-6.974028', '107.630367', 'Pagar biru, rumah pojok kanan'],
+                ['BDG002', 'Siti Rahayu',  '-6.920000', '107.610000', 'Pagar hitam, ada pohon mangga']]
+
+    for col_idx, (h, w) in enumerate(zip(headers, widths)):
+        ws.write(0, col_idx, h, header_fmt)
+        ws.set_column(col_idx, col_idx, w)
+
+    for row_idx, row in enumerate(examples, start=1):
+        for col_idx, val in enumerate(row):
+            ws.write(row_idx, col_idx, val, example_fmt)
+
+    wb.close()
+    output.seek(0)
+
+    from flask import send_file
+    return send_file(output, mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                     as_attachment=True, download_name='template_smartpoint.xlsx')
